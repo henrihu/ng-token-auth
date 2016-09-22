@@ -36,6 +36,8 @@ angular.module('ng-token-auth', ['ipCookie'])
           expirationUnit: 'days'
           secure: false
 
+        cookieHeader: 'auth_headers'
+
         # popups are difficult to test. mock this method in testing.
         createPopup: (url) ->
           window.open(url, '_blank', 'closebuttoncaption=Cancel')
@@ -233,7 +235,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # check if user is authenticated
           userIsAuthenticated: ->
-            @retrieveData('auth_headers') and @user.signedIn and not @tokenHasExpired()
+            @retrieveData(@getConfig().cookieHeader) and @user.signedIn and not @tokenHasExpired()
 
 
           # request password reset from API
@@ -272,7 +274,7 @@ angular.module('ng-token-auth', ['ipCookie'])
               .success((resp) =>
 
                 updateResponse = @getConfig().handleAccountUpdateResponse(resp)
-                curHeaders = @retrieveData('auth_headers')
+                curHeaders = @retrieveData(@getConfig().cookieHeader)
 
                 angular.extend @user, updateResponse
 
@@ -533,7 +535,7 @@ angular.module('ng-token-auth', ['ipCookie'])
                 if @getConfig().forceValidateToken
                   @validateToken({config: configName})
 
-                else if !isEmpty(@retrieveData('auth_headers'))
+                else if !isEmpty(@retrieveData(@getConfig().cookieHeader))
                   # if token has expired, do not verify token with API
                   if @tokenHasExpired()
                     $rootScope.$broadcast('auth:session-expired')
@@ -611,7 +613,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # get expiry by method provided in config
           getExpiry: ->
-            @getConfig().parseExpiry(@retrieveData('auth_headers') || {})
+            @getConfig().parseExpiry(@retrieveData(@getConfig().cookieHeader) || {})
 
 
           # this service attempts to cache auth tokens, but sometimes we
@@ -632,7 +634,7 @@ angular.module('ng-token-auth', ['ipCookie'])
             # kill cookies, otherwise session will resume on page reload
             # setting this value to null will force the validateToken method
             # to re-validate credentials with api server when validate is called
-            @deleteData('auth_headers')
+            @deleteData(@getConfig().cookieHeader)
 
 
           # destroy auth token on server, destroy user auth credentials
@@ -732,8 +734,8 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # persist authentication token, client id, uid
           setAuthHeaders: (h) ->
-            newHeaders = angular.extend((@retrieveData('auth_headers') || {}), h)
-            result = @persistData('auth_headers', newHeaders)
+            newHeaders = angular.extend((@retrieveData(@getConfig().cookieHeader) || {}), h)
+            result = @persistData(@getConfig().cookieHeader, newHeaders)
 
             expiry = @getExpiry()
             now    = new Date().getTime()
@@ -882,7 +884,7 @@ angular.module('ng-token-auth', ['ipCookie'])
       request: (req) ->
         $injector.invoke ['$http', '$auth',  ($http, $auth) ->
           if req.url.match($auth.apiUrl())
-            for key, val of $auth.retrieveData('auth_headers')
+            for key, val of $auth.retrieveData(@getConfig().cookieHeader)
               req.headers[key] = val
         ]
 

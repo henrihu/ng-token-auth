@@ -42,6 +42,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
         expirationUnit: 'days',
         secure: false
       },
+      cookieHeader: 'auth_headers',
       createPopup: function(url) {
         return window.open(url, '_blank', 'closebuttoncaption=Cancel');
       },
@@ -215,7 +216,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               return this.dfd.promise;
             },
             userIsAuthenticated: function() {
-              return this.retrieveData('auth_headers') && this.user.signedIn && !this.tokenHasExpired();
+              return this.retrieveData(this.getConfig().cookieHeader) && this.user.signedIn && !this.tokenHasExpired();
             },
             requestPasswordReset: function(params, opts) {
               var successUrl;
@@ -248,7 +249,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
                 return function(resp) {
                   var curHeaders, key, newHeaders, updateResponse, val, _ref;
                   updateResponse = _this.getConfig().handleAccountUpdateResponse(resp);
-                  curHeaders = _this.retrieveData('auth_headers');
+                  curHeaders = _this.retrieveData(_this.getConfig().cookieHeader);
                   angular.extend(_this.user, updateResponse);
                   if (curHeaders) {
                     newHeaders = {};
@@ -466,7 +467,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
                     this.validateToken({
                       config: configName
                     });
-                  } else if (!isEmpty(this.retrieveData('auth_headers'))) {
+                  } else if (!isEmpty(this.retrieveData(this.getConfig().cookieHeader))) {
                     if (this.tokenHasExpired()) {
                       $rootScope.$broadcast('auth:session-expired');
                       this.rejectDfd({
@@ -539,7 +540,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               return expiry && expiry < now;
             },
             getExpiry: function() {
-              return this.getConfig().parseExpiry(this.retrieveData('auth_headers') || {});
+              return this.getConfig().parseExpiry(this.retrieveData(this.getConfig().cookieHeader) || {});
             },
             invalidateTokens: function() {
               var key, val, _ref;
@@ -552,7 +553,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               if (this.timer != null) {
                 $interval.cancel(this.timer);
               }
-              return this.deleteData('auth_headers');
+              return this.deleteData(this.getConfig().cookieHeader);
             },
             signOut: function() {
               return $http["delete"](this.apiUrl() + this.getConfig().signOutUrl).success((function(_this) {
@@ -653,8 +654,8 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
             },
             setAuthHeaders: function(h) {
               var expiry, newHeaders, now, result;
-              newHeaders = angular.extend(this.retrieveData('auth_headers') || {}, h);
-              result = this.persistData('auth_headers', newHeaders);
+              newHeaders = angular.extend(this.retrieveData(this.getConfig().cookieHeader) || {}, h);
+              result = this.persistData(this.getConfig().cookieHeader, newHeaders);
               expiry = this.getExpiry();
               now = new Date().getTime();
               if (expiry > now) {
@@ -787,7 +788,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               '$http', '$auth', function($http, $auth) {
                 var key, val, _ref, _results;
                 if (req.url.match($auth.apiUrl())) {
-                  _ref = $auth.retrieveData('auth_headers');
+                  _ref = $auth.retrieveData(this.getConfig().cookieHeader);
                   _results = [];
                   for (key in _ref) {
                     val = _ref[key];
