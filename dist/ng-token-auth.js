@@ -788,7 +788,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               '$http', '$auth', function($http, $auth) {
                 var key, val, _ref, _results;
                 if (req.url.match($auth.apiUrl())) {
-                  _ref = $auth.retrieveData(this.getConfig().cookieHeader);
+                  _ref = $auth.retrieveData($auth.getConfig().cookieHeader);
                   _results = [];
                   for (key in _ref) {
                     val = _ref[key];
