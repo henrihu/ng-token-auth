@@ -294,7 +294,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
               if (configName == null) {
                 configName = defaultConfigName;
               }
-              return this.persistData(this.getConfig().keyCurrentConfigName, configName, configName);
+              return this.persistData('providerConfigName', configName, configName);
             },
             openAuthWindow: function(provider, opts) {
               var authUrl, omniauthWindowType;
@@ -461,8 +461,8 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
                       url += '?' + this.buildQueryString(params);
                     }
                     $location.url(url);
-                  } else if (this.retrieveData(this.getConfig().keyCurrentConfigName)) {
-                    configName = this.retrieveData(this.getConfig().keyCurrentConfigName);
+                  } else if (this.retrieveData('providerConfigName')) {
+                    configName = this.retrieveData('providerConfigName');
                   }
                   if (this.getConfig().forceValidateToken) {
                     this.validateToken({
@@ -550,7 +550,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
                 val = _ref[key];
                 delete this.user[key];
               }
-              this.deleteData(this.getConfig().keyCurrentConfigName);
+              this.deleteData('providerConfigName');
               if (this.timer != null) {
                 $interval.cancel(this.timer);
               }
@@ -710,7 +710,7 @@ angular.module('ng-token-auth', ['ipCookie']).provider('$auth', function() {
             getSavedConfig: function() {
               var c, key;
               c = void 0;
-              key = this.getConfig().keyCurrentConfigName;
+              key = 'providerConfigName';
               if (this.hasLocalStorage()) {
                 if (c == null) {
                   c = JSON.parse($window.localStorage.getItem(key));
