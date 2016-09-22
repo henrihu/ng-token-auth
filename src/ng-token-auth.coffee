@@ -884,7 +884,7 @@ angular.module('ng-token-auth', ['ipCookie'])
       request: (req) ->
         $injector.invoke ['$http', '$auth',  ($http, $auth) ->
           if req.url.match($auth.apiUrl())
-            for key, val of $auth.retrieveData(@getConfig().cookieHeader)
+            for key, val of $auth.retrieveData($auth.getConfig().cookieHeader)
               req.headers[key] = val
         ]
 
