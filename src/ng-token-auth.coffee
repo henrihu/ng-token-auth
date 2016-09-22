@@ -36,7 +36,8 @@ angular.module('ng-token-auth', ['ipCookie'])
           expirationUnit: 'days'
           secure: false
 
-        cookieHeader: 'auth_headers'
+        keyAuthHeader:        'auth_headers'
+        keyCurrentConfigName: 'currentConfigName'
 
         # popups are difficult to test. mock this method in testing.
         createPopup: (url) ->
@@ -235,7 +236,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # check if user is authenticated
           userIsAuthenticated: ->
-            @retrieveData(@getConfig().cookieHeader) and @user.signedIn and not @tokenHasExpired()
+            @retrieveData(@getConfig().keyAuthHeader) and @user.signedIn and not @tokenHasExpired()
 
 
           # request password reset from API
@@ -274,7 +275,7 @@ angular.module('ng-token-auth', ['ipCookie'])
               .success((resp) =>
 
                 updateResponse = @getConfig().handleAccountUpdateResponse(resp)
-                curHeaders = @retrieveData(@getConfig().cookieHeader)
+                curHeaders = @retrieveData(@getConfig().keyAuthHeader)
 
                 angular.extend @user, updateResponse
 
@@ -319,7 +320,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           setConfigName: (configName) ->
             configName ?= defaultConfigName
-            @persistData('currentConfigName', configName, configName)
+            @persistData(@getConfig().keyCurrentConfigName, configName, configName)
 
 
           # open external window to authentication provider
@@ -527,15 +528,15 @@ angular.module('ng-token-auth', ['ipCookie'])
 
                 # token cookie is present. user is returning to the site, or
                 # has refreshed the page.
-                else if @retrieveData('currentConfigName')
-                  configName = @retrieveData('currentConfigName')
+                else if @retrieveData(@getConfig().keyCurrentConfigName)
+                  configName = @retrieveData(@getConfig().keyCurrentConfigName)
 
                 # cookie might not be set, but forcing token validation has
                 # been enabled
                 if @getConfig().forceValidateToken
                   @validateToken({config: configName})
 
-                else if !isEmpty(@retrieveData(@getConfig().cookieHeader))
+                else if !isEmpty(@retrieveData(@getConfig().keyAuthHeader))
                   # if token has expired, do not verify token with API
                   if @tokenHasExpired()
                     $rootScope.$broadcast('auth:session-expired')
@@ -613,7 +614,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # get expiry by method provided in config
           getExpiry: ->
-            @getConfig().parseExpiry(@retrieveData(@getConfig().cookieHeader) || {})
+            @getConfig().parseExpiry(@retrieveData(@getConfig().keyAuthHeader) || {})
 
 
           # this service attempts to cache auth tokens, but sometimes we
@@ -627,14 +628,14 @@ angular.module('ng-token-auth', ['ipCookie'])
             delete @user[key] for key, val of @user
 
             # remove any assumptions about current configuration
-            @deleteData('currentConfigName')
+            @deleteData(@getConfig().keyCurrentConfigName)
 
             $interval.cancel @timer if @timer?
 
             # kill cookies, otherwise session will resume on page reload
             # setting this value to null will force the validateToken method
             # to re-validate credentials with api server when validate is called
-            @deleteData(@getConfig().cookieHeader)
+            @deleteData(@getConfig().keyAuthHeader)
 
 
           # destroy auth token on server, destroy user auth credentials
@@ -734,8 +735,8 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           # persist authentication token, client id, uid
           setAuthHeaders: (h) ->
-            newHeaders = angular.extend((@retrieveData(@getConfig().cookieHeader) || {}), h)
-            result = @persistData(@getConfig().cookieHeader, newHeaders)
+            newHeaders = angular.extend((@retrieveData(@getConfig().keyAuthHeader) || {}), h)
+            result = @persistData(@getConfig().keyAuthHeader, newHeaders)
 
             expiry = @getExpiry()
             now    = new Date().getTime()
@@ -807,7 +808,7 @@ angular.module('ng-token-auth', ['ipCookie'])
           # 4. default (first available config)
           getSavedConfig: ->
             c   = undefined
-            key = 'currentConfigName'
+            key = @getConfig().keyCurrentConfigName
 
             if @hasLocalStorage()
               c ?= JSON.parse($window.localStorage.getItem(key))
@@ -884,7 +885,7 @@ angular.module('ng-token-auth', ['ipCookie'])
       request: (req) ->
         $injector.invoke ['$http', '$auth',  ($http, $auth) ->
           if req.url.match($auth.apiUrl())
-            for key, val of $auth.retrieveData($auth.getConfig().cookieHeader)
+            for key, val of $auth.retrieveData($auth.getConfig().keyAuthHeader)
               req.headers[key] = val
         ]
 
