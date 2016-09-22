@@ -320,7 +320,7 @@ angular.module('ng-token-auth', ['ipCookie'])
 
           setConfigName: (configName) ->
             configName ?= defaultConfigName
-            @persistData(@getConfig().keyCurrentConfigName, configName, configName)
+            @persistData('providerConfigName', configName, configName)
 
 
           # open external window to authentication provider
@@ -528,8 +528,8 @@ angular.module('ng-token-auth', ['ipCookie'])
 
                 # token cookie is present. user is returning to the site, or
                 # has refreshed the page.
-                else if @retrieveData(@getConfig().keyCurrentConfigName)
-                  configName = @retrieveData(@getConfig().keyCurrentConfigName)
+                else if @retrieveData('providerConfigName')
+                  configName = @retrieveData('providerConfigName')
 
                 # cookie might not be set, but forcing token validation has
                 # been enabled
@@ -628,7 +628,7 @@ angular.module('ng-token-auth', ['ipCookie'])
             delete @user[key] for key, val of @user
 
             # remove any assumptions about current configuration
-            @deleteData(@getConfig().keyCurrentConfigName)
+            @deleteData('providerConfigName')
 
             $interval.cancel @timer if @timer?
 
@@ -808,7 +808,7 @@ angular.module('ng-token-auth', ['ipCookie'])
           # 4. default (first available config)
           getSavedConfig: ->
             c   = undefined
-            key = @getConfig().keyCurrentConfigName
+            key = 'providerConfigName'
 
             if @hasLocalStorage()
               c ?= JSON.parse($window.localStorage.getItem(key))
